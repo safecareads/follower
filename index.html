@@ -412,10 +412,10 @@
           showTxnCheck('used','⚠️ <strong>Payment Confirmed</strong><br>কিন্তু এই Transaction ID দিয়ে আগে একটি Order করা হয়েছে।<br>আগের Order ID: <b>'+String((result&&result.usedOrderId)||result.orderId||'')+'</b><br><small>একই Transaction ID দিয়ে দ্বিতীয় Order করা যাবে না।</small>');
           submitBtn.disabled=true;
         }else if(paymentVerified){
-          showTxnCheck('ok','✅ <strong>Payment Confirmed</strong> — Transaction ID Google Sheet-এ পাওয়া গেছে।<br><small>এখন Order Submit করতে পারবেন।</small>');
+          showTxnCheck('ok','✅ <strong>Payment Confirmed</strong> — <br><small>এখন Order Submit করতে পারবেন।</small>');
           submitBtn.disabled=false;
         }else{
-          showTxnCheck('bad','❌ <strong>Payment Confirm হয়নি</strong><br><span>'+String((result&&result.reason)||'এই Transaction ID Google Sheet-এ পাওয়া যায়নি।')+'</span>');
+          showTxnCheck('bad','❌ <strong>Payment Confirm হয়নি</strong><br><span>'+String((result&&result.reason)||'এই Transaction ID Payment Sheet-এ পাওয়া যায়নি।')+'</span>');
           submitBtn.disabled=false;
         }
         try{ delete window[callbackName]; }catch(e){}
