@@ -519,13 +519,13 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
           form.classList.remove('loading');
           const status=String(result.status||'');
           if(status==='Payment Verified'){
-            success.innerHTML='<strong style="color:#087443;font-size:18px">🎉 আপনার অর্ডারটি সফলভাবে Confirmed হয়েছে!</strong><br>আপনার Order ID: <b>'+String(orderId)+'</b><br>সাধারণত <b>১০ মিনিট–৪ ঘণ্টার</b> মধ্যে আপনার order-এর কাজ সম্পন্ন হবে। বিশেষ ক্ষেত্রে সর্বোচ্চ ২৪ ঘণ্টা সময় লাগতে পারে।<br><br>অর্ডার করার জন্য ধন্যবাদ। প্রয়োজনে <b>01926765032</b> নম্বরে যোগাযোগ করুন।';
+            success.innerHTML='<strong style="color:#087443;font-size:18px">🎉 আপনার অর্ডারটি সফলভাবে Confirmed হয়েছে!</strong><br>আপনার Order ID: <b>'+String(orderId)+'</b><br>সাধারণত <b>১০ মিনিট–৪ ঘণ্টার</b> মধ্যে আপনার order-এর কাজ সম্পন্ন হবে। বিশেষ ক্ষেত্রে সর্বোচ্চ ২৪ ঘণ্টা সময় লাগতে পারে।<br><br>অর্ডার করার জন্য ধন্যবাদ। প্রয়োজনে <b>01726765012</b> নম্বরে যোগাযোগ করুন।';
             submitBtn.textContent='অর্ডার Confirmed ✓';
           }else if(status==='Pending Payment Verification'){
-            success.innerHTML='<strong style="color:#087443;font-size:18px">✅ আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!</strong><br>Order ID: <b>'+String(orderId)+'</b><br>Payment verification complete হলে processing শুরু হবে। প্রয়োজনে <b>01926765032</b> নম্বরে যোগাযোগ করুন।';
+            success.innerHTML='<strong style="color:#087443;font-size:18px">✅ আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!</strong><br>Order ID: <b>'+String(orderId)+'</b><br>Payment verification complete হলে processing শুরু হবে। প্রয়োজনে <b>01726765012</b> নম্বরে যোগাযোগ করুন।';
             submitBtn.textContent='অর্ডার গ্রহণ করা হয়েছে ✓';
           }else{
-            success.innerHTML='<strong style="color:#087443;font-size:18px">✅ আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!</strong><br>Order ID: <b>'+String(orderId)+'</b><br>আমরা আপনার order processing-এর জন্য গ্রহণ করেছি। প্রয়োজনে <b>01926765032</b> নম্বরে যোগাযোগ করুন।';
+            success.innerHTML='<strong style="color:#087443;font-size:18px">✅ আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে!</strong><br>Order ID: <b>'+String(orderId)+'</b><br>আমরা আপনার order processing-এর জন্য গ্রহণ করেছি। প্রয়োজনে <b>01726765012</b> নম্বরে যোগাযোগ করুন।';
             submitBtn.textContent='অর্ডার গ্রহণ করা হয়েছে ✓';
           }
           success.classList.add('show');
@@ -538,7 +538,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
           statusPollTimer=setTimeout(()=>pollOrderStatus(orderId, attempt+1),1500);
         }else{
           form.classList.remove('loading');
-          success.innerHTML='<strong style="color:#9a3412">⏳ অর্ডার পাঠানো হয়েছে, তবে confirmation response আসতে একটু বেশি সময় লাগছে।</strong><br>Order ID: <b>'+String(orderId)+'</b><br>দয়া করে কিছুক্ষণ অপেক্ষা করুন। প্রয়োজনে <b>01926765032</b> নম্বরে যোগাযোগ করুন।';
+          success.innerHTML='<strong style="color:#9a3412">⏳ অর্ডার পাঠানো হয়েছে, তবে confirmation response আসতে একটু বেশি সময় লাগছে।</strong><br>Order ID: <b>'+String(orderId)+'</b><br>দয়া করে কিছুক্ষণ অপেক্ষা করুন। প্রয়োজনে <b>01726765012</b> নম্বরে যোগাযোগ করুন।';
           success.classList.add('show');
           submitBtn.textContent='Order পাঠানো হয়েছে';
           submitBtn.disabled=true;
