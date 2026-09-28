@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Safe Care — Order Tracking">
+<meta name="theme-color" content="#0b8f88">
+<title>Safe Care — Order Tracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#0b8f88;--deep:#063d3b;--ink:#102a2a;--muted:#617474;--line:#dceceb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hind Siliguri",sans-serif;color:var(--ink);background:linear-gradient(180deg,#f9ffff,#f3fbfa 55%,#fff);min-height:100vh}
+.wrap{width:min(1180px,94%);margin:auto;padding:42px 0 60px}
+.brand{text-align:center;margin-bottom:24px}
+.brand h1{font-family:"Plus Jakarta Sans","Hind Siliguri",sans-serif;color:var(--deep);margin:0 0 5px;font-size:32px}
+.brand p{margin:0;color:var(--muted)}
+.tracking-card{width:min(680px,100%);margin:0 auto 28px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:28px;box-shadow:0 20px 60px rgba(6,61,59,.10)}
+.tracking-card label{display:block;font-weight:700;margin-bottom:8px;font-size:18px}
+.tracking-card input{width:100%;border:1px solid #cfe2e0;background:#fbfefe;border-radius:13px;padding:14px;font:500 16px "Hind Siliguri",sans-serif;outline:none}
+.tracking-card input:focus{border-color:#6bc8c2;box-shadow:0 0 0 4px #e8f8f7}
+.track-btn{width:100%;margin-top:12px;border:0;cursor:pointer;padding:14px 20px;border-radius:13px;background:linear-gradient(135deg,var(--teal),#08716d);color:#fff;font:700 16px "Hind Siliguri",sans-serif}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.result{display:none;margin-top:18px;border:1px solid var(--line);border-radius:18px;padding:18px;background:#fbfefe}
+.result.show{display:block}
+.status{display:inline-block;padding:7px 13px;border-radius:999px;background:#e9faf7;color:#087443;font-weight:800;margin:8px 0 12px}
+.row{display:flex;justify-content:space-between;gap:18px;padding:9px 0;border-bottom:1px dashed #d8e8e6}
+.row:last-child{border-bottom:0}
+.row span:first-child{color:var(--muted)}
+.error{color:#b42318;background:#fff7f7;border:1px solid #fda4af;padding:12px;border-radius:12px;margin-top:16px;display:none}
+.error.show{display:block}
+.back{display:block;text-align:center;margin-top:18px;color:var(--teal);font-weight:700;text-decoration:none}
+
+.table-card{background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 16px 45px rgba(6,61,59,.08);overflow:hidden}
+.table-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:14px;align-items:center}
+.table-head h3{margin:0;color:var(--deep);font-size:22px}
+.table-head-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.updated{font-size:13px;color:var(--muted)}
+.refresh{border:0;cursor:pointer;padding:9px 13px;border-radius:11px;background:var(--deep);color:#fff;font:700 14px "Hind Siliguri",sans-serif}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:980px}
+th,td{padding:13px 14px;text-align:left;border-bottom:1px solid #edf4f3;vertical-align:middle}
+th{background:#f7fcfb;color:#47605e;font-size:13px;white-space:nowrap;position:sticky;top:0;z-index:1}
+td{font-size:14px}
+tr:last-child td{border-bottom:0}
+tr.highlight td{background:#eafaf8}
+.order-id{font-weight:800;color:var(--deep);white-space:nowrap}
+.name{font-weight:700}
+.phone{white-space:nowrap}
+.page-link{display:inline-block;max-width:210px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--teal);font-weight:700;text-decoration:none}
+.followers{font-weight:800;white-space:nowrap}
+.amount{font-weight:800;white-space:nowrap}
+.status-pill{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px;white-space:nowrap}
+.status-pill.progress{background:#fff6df;color:#8a5a00}
+.status-pill.done{background:#e8faf3;color:#087443}
+.empty,.server-error{padding:35px;text-align:center;color:var(--muted)}
+.server-error{color:#b42318}
+.loading{opacity:.65;pointer-events:none}
+@media(max-width:700px){
+ .wrap{padding-top:22px}
+ .brand h1{font-size:27px}
+ .tracking-card,.table-head{padding:20px}
+ .table-head{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">
+    <h1>Safe Care</h1>
+    <p>Order Tracking</p>
+  </div>
+
+  <!-- TOP: individual Order ID tracking/search -->
+  <section class="tracking-card">
+    <label for="orderId">আপনার Order ID দিন</label>
+    <input id="orderId" type="text" placeholder="যেমন: SC-XXXX-XXXXXXXX" autocomplete="off">
+    <div class="hint">আপনার order submit হওয়ার পরে যে Order ID পেয়েছেন সেটি এখানে দিন।</div>
+    <button id="trackBtn" class="track-btn" type="button">অর্ডার ট্র্যাক করুন →</button>
+
+    <div id="error" class="error"></div>
+
+    <div id="result" class="result">
+      <strong>আপনার অর্ডারের বর্তমান অবস্থা</strong>
+      <div id="status" class="status">লোড হচ্ছে...</div>
+      <div class="row"><span>Order ID</span><b id="showOrderId">—</b></div>
+      <div class="row"><span>পরবর্তী আপডেট</span><b>এই পেজটি আবার খুলে দেখুন</b></div>
+    </div>
+  </section>
+
+  <!-- BELOW: continuous public order list -->
+  <section class="table-card">
+    <div class="table-head">
+      <div>
+        <h3>All Orders</h3>
+        <div id="totalBadge" class="updated">Total Orders: 0</div>
+      </div>
+      <div class="table-head-right">
+        <div id="updated" class="updated">আপডেট হচ্ছে...</div>
+        <button id="refreshBtn" class="refresh" type="button">↻ Refresh</button>
+      </div>
+    </div>
+    <div id="tableWrap" class="table-wrap">
+      <div class="empty">⏳ Order list লোড হচ্ছে...</div>
+    </div>
+  </section>
+
+  <a class="back" href="./">← অর্ডার পেজে ফিরে যান</a>
+</main>
+
+<script>
+const ENDPOINT='https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec';
+
+const orderIdInput=document.getElementById('orderId');
+const trackBtn=document.getElementById('trackBtn');
+const resultBox=document.getElementById('result');
+const errorBox=document.getElementById('error');
+const statusBox=document.getElementById('status');
+const showOrderId=document.getElementById('showOrderId');
+
+const tableWrap=document.getElementById('tableWrap');
+const refreshBtn=document.getElementById('refreshBtn');
+const totalBadge=document.getElementById('totalBadge');
+const updated=document.getElementById('updated');
+
+let currentOrders=[];
+
+function esc(value){
+  return String(value==null?'':value)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function formatFollowers(n){
+  const x=Number(n||0);
+  if(x>=100000)return (x/100000).toLocaleString('en-US',{maximumFractionDigits:2})+' লক্ষ';
+  if(x>=1000)return (x/1000).toLocaleString('en-US',{maximumFractionDigits:2})+' হাজার';
+  return x.toLocaleString('en-US');
+}
+function formatAmount(n){return '৳ '+Number(n||0).toLocaleString('en-US');}
+
+function renderOrders(orders,highlightId){
+  currentOrders=orders||[];
+  totalBadge.textContent='Total Orders: '+currentOrders.length;
+  if(!currentOrders.length){
+    tableWrap.innerHTML='<div class="empty">এখনো কোনো Order পাওয়া যায়নি।</div>';
+    return;
+  }
+
+  let html='<table><thead><tr>'+
+    '<th>Date / Time</th><th>Order ID</th><th>Customer Name</th><th>Mobile</th>'+
+    '<th>Page / Profile</th><th>Followers</th><th>Payment</th><th>Status</th>'+
+    '</tr></thead><tbody>';
+
+  currentOrders.forEach(function(o){
+    const done=String(o.status||'').toLowerCase()==='completed';
+    const page=String(o.pageUrl||'').trim();
+    const oid=String(o.orderId||'');
+    const highlight=highlightId && oid.toLowerCase()===String(highlightId).toLowerCase();
+
+    html+='<tr class="'+(highlight?'highlight':'')+'" id="order-row-'+esc(oid)+'">'+
+      '<td>'+esc(o.timestamp||'—')+'</td>'+
+      '<td class="order-id">'+esc(o.orderId||'—')+'</td>'+
+      '<td class="name">'+esc(o.customerName||'—')+'</td>'+
+      '<td class="phone">'+esc(o.phone||'—')+'</td>'+
+      '<td>'+(page?'<a class="page-link" href="'+esc(page)+'" target="_blank" rel="noopener noreferrer" title="'+esc(page)+'">'+esc(page)+'</a>':'—')+'</td>'+
+      '<td class="followers">'+esc(formatFollowers(o.followers))+'</td>'+
+      '<td class="amount">'+esc(formatAmount(o.amount))+'</td>'+
+      '<td><span class="status-pill '+(done?'done':'progress')+'">'+(done?'✅ Completed':'🟢 In Progress')+'</span></td>'+
+      '</tr>';
+  });
+  html+='</tbody></table>';
+  tableWrap.innerHTML=html;
+
+  if(highlightId){
+    const rows=tableWrap.querySelectorAll('tr.highlight');
+    if(rows.length) rows[0].scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+
+/* Top Order ID search: checks the backend directly and also highlights the
+   matching row when the public list is loaded. */
+function showError(msg){
+  errorBox.textContent=msg;
+  errorBox.classList.add('show');
+  resultBox.classList.remove('show');
+}
+function trackOrder(orderId){
+  orderId=String(orderId||'').trim();
+  if(!orderId){showError('আগে আপনার Order ID দিন।');return;}
+
+  errorBox.classList.remove('show');
+  resultBox.classList.add('show');
+  statusBox.textContent='⏳ যাচাই করা হচ্ছে...';
+  showOrderId.textContent=orderId;
+  trackBtn.classList.add('loading');
+  trackBtn.textContent='চেক করা হচ্ছে...';
+
+  const callbackName='safeCareTrack_'+Date.now();
+  let finished=false;
+
+  window[callbackName]=function(data){
+    if(finished)return;
+    finished=true;
+
+    if(data&&data.found){
+      const status=String(data.status||'In Progress');
+      if(/complete|completed|done/i.test(status)){
+        statusBox.textContent='✅ Completed';
+      }else{
+        statusBox.textContent='🟢 In Progress';
+      }
+
+      if(currentOrders.length) renderOrders(currentOrders,orderId);
+    }else{
+      showError('এই Order ID-এর কোনো তথ্য পাওয়া যায়নি। Order ID ঠিক আছে কিনা দেখুন।');
+    }
+
+    cleanup();
+  };
+
+  const script=document.createElement('script');
+  script.async=true;
+  script.src=ENDPOINT+'?'+new URLSearchParams({
+    action:'orderStatus',
+    orderId:orderId,
+    callback:callbackName
+  }).toString();
+
+  script.onerror=function(){
+    if(finished)return;
+    finished=true;
+    showError('Tracking server থেকে response পাওয়া যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+    cleanup();
+  };
+
+  function cleanup(){
+    trackBtn.classList.remove('loading');
+    trackBtn.textContent='অর্ডার ট্র্যাক করুন →';
+    try{delete window[callbackName]}catch(e){}
+    if(script.parentNode)script.parentNode.removeChild(script);
+  }
+  document.body.appendChild(script);
+}
+
+trackBtn.addEventListener('click',()=>trackOrder(orderIdInput.value));
+orderIdInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter')trackOrder(orderIdInput.value);
+});
+
+function loadOrders(){
+  refreshBtn.classList.add('loading');
+  refreshBtn.textContent='Loading...';
+  tableWrap.innerHTML='<div class="empty">⏳ Order list লোড হচ্ছে...</div>';
+
+  const callback='safeCareOrderList_'+Date.now();
+  let finished=false;
+
+  window[callback]=function(data){
+    if(finished)return;
+    finished=true;
+    if(data&&data.found){
+      const orders=Array.isArray(data.orders)?data.orders:[];
+      const searched=orderIdInput.value.trim();
+      renderOrders(orders,searched);
+      updated.textContent='সর্বশেষ আপডেট: '+new Date().toLocaleTimeString('bn-BD');
+    }else{
+      tableWrap.innerHTML='<div class="server-error">Order list পাওয়া যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।</div>';
+    }
+    cleanup();
+  };
+
+  const script=document.createElement('script');
+  script.async=true;
+  script.src=ENDPOINT+'?'+new URLSearchParams({
+    action:'orderList',
+    callback:callback
+  }).toString();
+
+  script.onerror=function(){
+    if(finished)return;
+    finished=true;
+    tableWrap.innerHTML='<div class="server-error">Tracking server থেকে response পাওয়া যায়নি।</div>';
+    cleanup();
+  };
+
+  function cleanup(){
+    refreshBtn.classList.remove('loading');
+    refreshBtn.textContent='↻ Refresh';
+    try{delete window[callback]}catch(e){}
+    if(script.parentNode)script.parentNode.removeChild(script);
+  }
+  document.body.appendChild(script);
+}
+
+refreshBtn.addEventListener('click',loadOrders);
+loadOrders();
+setInterval(loadOrders,30000);
+
+/* If the page is opened from the order-success tracking link:
+   order-tracking.html?order=SC-... */
+const params=new URLSearchParams(location.search);
+const initialOrder=params.get('order');
+if(initialOrder){
+  orderIdInput.value=initialOrder;
+  trackOrder(initialOrder);
+}
+</script>
+</body>
+</html>
