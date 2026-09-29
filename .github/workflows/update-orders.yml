@@ -1,0 +1,36 @@
+name: Update Safe Care Public Orders
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update-orders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch latest public order data
+        env:
+          ORDERS_ENDPOINT: 'https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec?action=publicOrders'
+        run: |
+          curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 "$ORDERS_ENDPOINT" -o orders.json.tmp
+          jq -e '.found == true and (.orders | type == "array")' orders.json.tmp >/dev/null
+          mv orders.json.tmp orders.json
+
+      - name: Commit updated orders.json
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add orders.json
+          if git diff --cached --quiet; then
+            echo 'No order data changes.'
+            exit 0
+          fi
+          git commit -m 'Update public order tracking data'
+          git push
