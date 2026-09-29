@@ -113,7 +113,6 @@ tr.highlight td{background:#eafaf8}
 <script>
 const ENDPOINT='https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec';
 const ORDERS_URL='./orders.json';
-const CACHE_KEY='safeCarePublicOrders_v1';
 
 const orderIdInput=document.getElementById('orderId');
 const trackBtn=document.getElementById('trackBtn');
@@ -197,32 +196,6 @@ function showStatus(orderId,status){
   renderOrders(currentOrders,orderId);
 }
 
-function saveCache(data){
-  try{
-    localStorage.setItem(CACHE_KEY,JSON.stringify({
-      orders:Array.isArray(data.orders)?data.orders:[],
-      generatedAt:data.generatedAt||'',
-      savedAt:Date.now()
-    }));
-  }catch(e){}
-}
-
-function loadCache(){
-  try{
-    const raw=localStorage.getItem(CACHE_KEY);
-    if(!raw)return false;
-    const data=JSON.parse(raw);
-    if(!Array.isArray(data.orders))return false;
-
-    renderOrders(data.orders,'');
-    const when=data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString('bn-BD') : '';
-    updated.textContent=when ? 'ক্যাশ ডাটা: '+when : 'ক্যাশ ডাটা দেখানো হচ্ছে';
-    return true;
-  }catch(e){
-    return false;
-  }
-}
-
 /* Main fast loader:
    1) cached data appears immediately
    2) GitHub orders.json is fetched in the background
@@ -233,9 +206,10 @@ async function loadOrders(showLoading){
   }
 
   try{
-    const response=await fetch(ORDERS_URL+'?v='+Date.now(),{
+    const response=await fetch(ORDERS_URL+'?v='+Date.now()+'-'+Math.random().toString(36).slice(2),{
+      method:'GET',
       cache:'no-store',
-      headers:{'Accept':'application/json'}
+      headers:{'Accept':'application/json','Cache-Control':'no-cache','Pragma':'no-cache'}
     });
 
     if(!response.ok) throw new Error('HTTP '+response.status);
@@ -244,8 +218,6 @@ async function loadOrders(showLoading){
     const orders=Array.isArray(data.orders)?data.orders:[];
 
     renderOrders(orders,orderIdInput.value.trim());
-    saveCache(data);
-
     const when=data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString('bn-BD') : new Date().toLocaleTimeString('bn-BD');
     updated.textContent='সর্বশেষ আপডেট: '+when;
   }catch(err){
@@ -334,9 +306,8 @@ refreshBtn.addEventListener('click',()=>{
   });
 });
 
-/* Show cached data immediately, then update silently from GitHub. */
-loadCache();
-loadOrders(!currentOrders.length);
+/* Always load the latest public snapshot from GitHub. No localStorage cache is used. */
+loadOrders(true);
 
 /* Background refresh every 5 minutes. */
 setInterval(()=>loadOrders(false),300000);
