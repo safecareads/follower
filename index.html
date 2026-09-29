@@ -492,9 +492,22 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
       },10000);
     }
 
-    transactionIdInput.addEventListener('blur', verifyTransaction);
-    transactionIdInput.addEventListener('change', verifyTransaction);
+    // Prevent duplicate verification requests from blur + change.
+    // The browser waits briefly after the user finishes editing, then sends
+    // exactly one verification request for the current Transaction ID.
+    let verifyDebounceTimer = null;
+    function scheduleVerifyTransaction(delay){
+      clearTimeout(verifyDebounceTimer);
+      verifyDebounceTimer=setTimeout(()=>{
+        verifyDebounceTimer=null;
+        verifyTransaction();
+      }, delay || 250);
+    }
+
+    transactionIdInput.addEventListener('blur', ()=>scheduleVerifyTransaction(150));
+    transactionIdInput.addEventListener('change', ()=>scheduleVerifyTransaction(150));
     transactionIdInput.addEventListener('input', ()=>{
+      clearTimeout(verifyDebounceTimer);
       paymentVerified=false;
       transactionUsed=false;
       submitBtn.disabled=false;
@@ -535,7 +548,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
         }
 
         if(attempt < 20){
-          statusPollTimer=setTimeout(()=>pollOrderStatus(orderId, attempt+1),1500);
+          statusPollTimer=setTimeout(()=>pollOrderStatus(orderId, attempt+1),1200);
         }else{
           form.classList.remove('loading');
           success.innerHTML='<strong style="color:#9a3412">⏳ অর্ডার পাঠানো হয়েছে, তবে confirmation response আসতে একটু বেশি সময় লাগছে।</strong><br>Order ID: <b>'+String(orderId)+'</b><br>দয়া করে কিছুক্ষণ অপেক্ষা করুন। প্রয়োজনে <b>01726765012</b> নম্বরে যোগাযোগ করুন.<br><br><a href="./order-tracking.html?order='+encodeURIComponent(orderId)+'" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#0b8f88;color:#fff;text-decoration:none;font-weight:700;">🔎 আপনার অর্ডারটি ট্র্যাক করুন →</a>';
@@ -558,7 +571,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
         finished=true;
         try{ delete window[callbackName]; }catch(e){}
         if(attempt < 20){
-          statusPollTimer=setTimeout(()=>pollOrderStatus(orderId, attempt+1),1500);
+          statusPollTimer=setTimeout(()=>pollOrderStatus(orderId, attempt+1),1200);
         }
       };
       document.body.appendChild(script);
@@ -608,7 +621,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
 
       // The POST itself goes to the hidden iframe. We do not wait for the
       // iframe load event; instead we poll the Orders sheet by client Order ID.
-      setTimeout(()=>pollOrderStatus(clientOrderId,0),1200);
+      setTimeout(()=>pollOrderStatus(clientOrderId,0),600);
     });
 
     // Old iframe postMessage is intentionally not used as the primary order
