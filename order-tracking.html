@@ -113,9 +113,7 @@ tr.highlight td{background:#eafaf8}
 <script>
 const ENDPOINT='https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec';
 const ORDERS_URL='./orders.json';
-const CACHE_KEY='safeCarePublicOrders_v2';
-const CACHE_MAX_AGE=24*60*60*1000;
-const REFRESH_MS=60*1000;
+const CACHE_KEY='safeCarePublicOrders_v1';
 
 const orderIdInput=document.getElementById('orderId');
 const trackBtn=document.getElementById('trackBtn');
@@ -123,17 +121,14 @@ const resultBox=document.getElementById('result');
 const errorBox=document.getElementById('error');
 const statusBox=document.getElementById('status');
 const showOrderId=document.getElementById('showOrderId');
+
 const tableWrap=document.getElementById('tableWrap');
 const refreshBtn=document.getElementById('refreshBtn');
 const totalBadge=document.getElementById('totalBadge');
 const updated=document.getElementById('updated');
 
 let currentOrders=[];
-let latestDataTime=0;
 
-// The public list is now loaded from the static JSON file on GitHub Pages.
-// Google Apps Script is only used as a fallback for a brand-new Order ID that
-// has not reached the next GitHub sync yet.
 function esc(value){
   return String(value==null?'':value)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -147,24 +142,10 @@ function formatFollowers(n){
 }
 function formatAmount(n){return '৳ '+Number(n||0).toLocaleString('en-US');}
 
-function saveCache(data){
-  try{
-    localStorage.setItem(CACHE_KEY,JSON.stringify({savedAt:Date.now(),data:data}));
-  }catch(e){}
-}
-function readCache(){
-  try{
-    const raw=localStorage.getItem(CACHE_KEY);
-    if(!raw)return null;
-    const parsed=JSON.parse(raw);
-    if(!parsed || !parsed.data || !Array.isArray(parsed.data.orders))return null;
-    return parsed;
-  }catch(e){return null;}
-}
-
 function renderOrders(orders,highlightId){
   currentOrders=Array.isArray(orders)?orders:[];
   totalBadge.textContent='Total Orders: '+currentOrders.length;
+
   if(!currentOrders.length){
     tableWrap.innerHTML='<div class="empty">এখনো কোনো Order পাওয়া যায়নি।</div>';
     return;
@@ -176,7 +157,7 @@ function renderOrders(orders,highlightId){
     '</tr></thead><tbody>';
 
   currentOrders.forEach(function(o){
-    const done=String(o.status||'').toLowerCase()==='completed';
+    const done=/complete|completed|done/i.test(String(o.status||''));
     const page=String(o.pageUrl||'').trim();
     const oid=String(o.orderId||'');
     const highlight=highlightId && oid.toLowerCase()===String(highlightId).toLowerCase();
@@ -192,52 +173,13 @@ function renderOrders(orders,highlightId){
       '<td><span class="status-pill '+(done?'done':'progress')+'">'+(done?'✅ Completed':'🟢 In Progress')+'</span></td>'+
       '</tr>';
   });
+
   html+='</tbody></table>';
   tableWrap.innerHTML=html;
 
   if(highlightId){
-    const rows=tableWrap.querySelectorAll('tr.highlight');
-    if(rows.length) rows[0].scrollIntoView({behavior:'smooth',block:'center'});
-  }
-}
-
-function setUpdatedLabel(source){
-  const now=new Date().toLocaleTimeString('bn-BD');
-  updated.textContent=source==='cache'
-    ? 'ক্যাশ থেকে দেখানো হচ্ছে • '+now
-    : 'সর্বশেষ আপডেট: '+now;
-}
-
-function applyData(data,source,highlightId){
-  if(!data || !Array.isArray(data.orders)) return false;
-  latestDataTime=Date.now();
-  renderOrders(data.orders,highlightId || orderIdInput.value.trim());
-  setUpdatedLabel(source);
-  return true;
-}
-
-async function loadOrders({silent=false}={}){
-  if(!silent && !currentOrders.length){
-    tableWrap.innerHTML='<div class="empty">⏳ Order list লোড হচ্ছে...</div>';
-  }
-
-  try{
-    const response=await fetch(ORDERS_URL+'?v='+Date.now(),{cache:'no-store'});
-    if(!response.ok) throw new Error('HTTP '+response.status);
-    const data=await response.json();
-    if(!data || !Array.isArray(data.orders)) throw new Error('Invalid data');
-    saveCache(data);
-    applyData(data,'live',orderIdInput.value.trim());
-  }catch(err){
-    // Never erase already-visible/cached data just because the network is slow.
-    if(!currentOrders.length){
-      const cached=readCache();
-      if(cached && Array.isArray(cached.data.orders)){
-        applyData(cached.data,'cache',orderIdInput.value.trim());
-      }else if(!silent){
-        tableWrap.innerHTML='<div class="server-error">Order data এখনো পাওয়া যায়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।</div>';
-      }
-    }
+    const row=tableWrap.querySelector('tr.highlight');
+    if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
   }
 }
 
@@ -246,91 +188,160 @@ function showError(msg){
   errorBox.classList.add('show');
   resultBox.classList.remove('show');
 }
+
 function showStatus(orderId,status){
   errorBox.classList.remove('show');
   resultBox.classList.add('show');
   showOrderId.textContent=orderId;
-  statusBox.textContent=/complete|completed|done/i.test(String(status||''))
-    ? '✅ Completed'
-    : '🟢 In Progress';
+  statusBox.textContent=/complete|completed|done/i.test(String(status||'')) ? '✅ Completed' : '🟢 In Progress';
+  renderOrders(currentOrders,orderId);
 }
 
-function findLocalOrder(orderId){
-  const wanted=String(orderId||'').trim().toLowerCase();
-  return currentOrders.find(o=>String(o.orderId||'').trim().toLowerCase()===wanted) || null;
+function saveCache(data){
+  try{
+    localStorage.setItem(CACHE_KEY,JSON.stringify({
+      orders:Array.isArray(data.orders)?data.orders:[],
+      generatedAt:data.generatedAt||'',
+      savedAt:Date.now()
+    }));
+  }catch(e){}
 }
 
+function loadCache(){
+  try{
+    const raw=localStorage.getItem(CACHE_KEY);
+    if(!raw)return false;
+    const data=JSON.parse(raw);
+    if(!Array.isArray(data.orders))return false;
+
+    renderOrders(data.orders,'');
+    const when=data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString('bn-BD') : '';
+    updated.textContent=when ? 'ক্যাশ ডাটা: '+when : 'ক্যাশ ডাটা দেখানো হচ্ছে';
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+/* Main fast loader:
+   1) cached data appears immediately
+   2) GitHub orders.json is fetched in the background
+   3) Apps Script is NOT used for the public list */
+async function loadOrders(showLoading){
+  if(showLoading && !currentOrders.length){
+    tableWrap.innerHTML='<div class="empty">⏳ Order list লোড হচ্ছে...</div>';
+  }
+
+  try{
+    const response=await fetch(ORDERS_URL+'?v='+Date.now(),{
+      cache:'no-store',
+      headers:{'Accept':'application/json'}
+    });
+
+    if(!response.ok) throw new Error('HTTP '+response.status);
+
+    const data=await response.json();
+    const orders=Array.isArray(data.orders)?data.orders:[];
+
+    renderOrders(orders,orderIdInput.value.trim());
+    saveCache(data);
+
+    const when=data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString('bn-BD') : new Date().toLocaleTimeString('bn-BD');
+    updated.textContent='সর্বশেষ আপডেট: '+when;
+  }catch(err){
+    /* If GitHub is temporarily unavailable, keep cached data visible. */
+    if(!currentOrders.length){
+      tableWrap.innerHTML='<div class="server-error">Order data এখন পাওয়া যাচ্ছে না। কিছুক্ষণ পরে আবার চেষ্টা করুন।</div>';
+      updated.textContent='ডাটা লোড করা যায়নি';
+    }else{
+      updated.textContent='আগের ডাটা দেখানো হচ্ছে';
+    }
+  }
+}
+
+/* Top Order ID search:
+   searches the already-loaded GitHub data first.
+   Only if the order is not found locally, it falls back to Apps Script. */
 function trackOrder(orderId){
   orderId=String(orderId||'').trim();
   if(!orderId){showError('আগে আপনার Order ID দিন।');return;}
 
-  trackBtn.classList.add('loading');
-  trackBtn.textContent='চেক করা হচ্ছে...';
-  errorBox.classList.remove('show');
-  resultBox.classList.add('show');
-  showOrderId.textContent=orderId;
-  statusBox.textContent='⏳ খোঁজা হচ্ছে...';
+  const local=currentOrders.find(o=>String(o.orderId||'').toLowerCase()===orderId.toLowerCase());
 
-  const local=findLocalOrder(orderId);
   if(local){
     showStatus(orderId,local.status);
-    renderOrders(currentOrders,orderId);
-    trackBtn.classList.remove('loading');
-    trackBtn.textContent='অর্ডার ট্র্যাক করুন →';
     return;
   }
 
-  // New orders may take a few minutes to appear in the next GitHub snapshot.
-  // Only in that case do we use the old Apps Script lookup as a fallback.
+  errorBox.classList.remove('show');
+  resultBox.classList.add('show');
+  statusBox.textContent='⏳ যাচাই করা হচ্ছে...';
+  showOrderId.textContent=orderId;
+  trackBtn.classList.add('loading');
+  trackBtn.textContent='চেক করা হচ্ছে...';
+
   const callbackName='safeCareTrack_'+Date.now();
   let finished=false;
+
   window[callbackName]=function(data){
     if(finished)return;
     finished=true;
+
     if(data&&data.found){
       showStatus(orderId,data.status||'In Progress');
-      statusBox.textContent=/complete|completed|done/i.test(String(data.status||''))
-        ? '✅ Completed'
-        : '🟢 In Progress';
     }else{
-      showError('এই Order ID এখনো public tracking list-এ sync হয়নি। নতুন order হলে কয়েক মিনিট পরে আবার দেখুন।');
+      showError('এই Order ID-এর কোনো তথ্য পাওয়া যায়নি। Order ID ঠিক আছে কিনা দেখুন।');
     }
     cleanup();
   };
 
   const script=document.createElement('script');
   script.async=true;
-  script.src=ENDPOINT+'?'+new URLSearchParams({action:'orderStatus',orderId:orderId,callback:callbackName}).toString();
+  script.src=ENDPOINT+'?'+new URLSearchParams({
+    action:'orderStatus',
+    orderId:orderId,
+    callback:callbackName
+  }).toString();
+
   script.onerror=function(){
     if(finished)return;
     finished=true;
-    showError('নতুন Order ID এখনো sync হয়নি। কয়েক মিনিট পরে আবার চেষ্টা করুন।');
+    showError('এই Order ID এখনো public data-তে আসেনি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
     cleanup();
   };
+
   function cleanup(){
     trackBtn.classList.remove('loading');
     trackBtn.textContent='অর্ডার ট্র্যাক করুন →';
     try{delete window[callbackName]}catch(e){}
     if(script.parentNode)script.parentNode.removeChild(script);
   }
+
   document.body.appendChild(script);
 }
 
 trackBtn.addEventListener('click',()=>trackOrder(orderIdInput.value));
-refreshBtn.addEventListener('click',()=>loadOrders({silent:false}));
-orderIdInput.addEventListener('keydown',e=>{if(e.key==='Enter')trackOrder(orderIdInput.value);});
+orderIdInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter')trackOrder(orderIdInput.value);
+});
 
-// Show cached data immediately, then update silently from GitHub Pages.
-const cached=readCache();
-if(cached && Array.isArray(cached.data.orders) && (Date.now()-cached.savedAt)<=CACHE_MAX_AGE){
-  applyData(cached.data,'cache',orderIdInput.value.trim());
-}
-loadOrders({silent:!!cached});
+refreshBtn.addEventListener('click',()=>{
+  refreshBtn.classList.add('loading');
+  refreshBtn.textContent='Loading...';
+  loadOrders(false).finally(()=>{
+    refreshBtn.classList.remove('loading');
+    refreshBtn.textContent='↻ Refresh';
+  });
+});
 
-// Keep the already-open page fresh without contacting Google Apps Script.
-setInterval(()=>loadOrders({silent:true}),REFRESH_MS);
+/* Show cached data immediately, then update silently from GitHub. */
+loadCache();
+loadOrders(!currentOrders.length);
 
-/* If the page is opened from the order-success tracking link:
+/* Background refresh every 5 minutes. */
+setInterval(()=>loadOrders(false),300000);
+
+/* If opened from the order-success tracking link:
    order-tracking.html?order=SC-... */
 const params=new URLSearchParams(location.search);
 const initialOrder=params.get('order');
