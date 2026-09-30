@@ -113,6 +113,7 @@ tr.highlight td{background:#eafaf8}
 <script>
 const ENDPOINT='https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec';
 const ORDERS_URL='./orders.json';
+const LIVE_PUBLIC_ORDERS_ENDPOINT='https://script.google.com/macros/s/AKfycbzvGgDL3IuOLbyndxntfGDNRsjctteGS_IrSd2nL9VfxieebW1AC8G_enjhEyck4RxlAw/exec';
 
 const orderIdInput=document.getElementById('orderId');
 const trackBtn=document.getElementById('trackBtn');
@@ -196,10 +197,67 @@ function showStatus(orderId,status){
   renderOrders(currentOrders,orderId);
 }
 
+/* Live public list loader:
+   orders.json is still the instant/static source, but Apps Script publicOrders
+   is checked in the background so a newly submitted order can appear before
+   the next GitHub Actions snapshot. If Apps Script is unavailable, the static
+   GitHub data remains visible. */
+function loadLivePublicOrders(){
+  return new Promise(function(resolve){
+    const callbackName='safeCarePublicOrders_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const script=document.createElement('script');
+    let finished=false;
+    const timer=setTimeout(function(){
+      if(finished)return;
+      finished=true;
+      cleanup();
+      resolve(false);
+    },12000);
+
+    function cleanup(){
+      clearTimeout(timer);
+      try{delete window[callbackName]}catch(e){}
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+
+    window[callbackName]=function(data){
+      if(finished)return;
+      finished=true;
+      const orders=Array.isArray(data&&data.orders)?data.orders:[];
+      if(data&&data.found===true){
+        renderOrders(orders,orderIdInput.value.trim());
+        const when=data.generatedAt
+          ? new Date(data.generatedAt).toLocaleTimeString('bn-BD')
+          : new Date().toLocaleTimeString('bn-BD');
+        updated.textContent='সর্বশেষ লাইভ আপডেট: '+when;
+        cleanup();
+        resolve(true);
+        return;
+      }
+      cleanup();
+      resolve(false);
+    };
+
+    script.async=true;
+    script.src=LIVE_PUBLIC_ORDERS_ENDPOINT+'?'+new URLSearchParams({
+      action:'publicOrders',
+      callback:callbackName,
+      _:String(Date.now())
+    }).toString();
+    script.onerror=function(){
+      if(finished)return;
+      finished=true;
+      cleanup();
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+}
+
 /* Main fast loader:
-   1) cached data appears immediately
-   2) GitHub orders.json is fetched in the background
-   3) Apps Script is NOT used for the public list */
+   1) orders.json appears immediately
+   2) GitHub orders.json is refreshed with cache-busting
+   3) Apps Script publicOrders is checked in the background for the newest order */
 async function loadOrders(showLoading){
   if(showLoading && !currentOrders.length){
     tableWrap.innerHTML='<div class="empty">⏳ Order list লোড হচ্ছে...</div>';
@@ -219,7 +277,9 @@ async function loadOrders(showLoading){
 
     renderOrders(orders,orderIdInput.value.trim());
     const when=data.generatedAt ? new Date(data.generatedAt).toLocaleTimeString('bn-BD') : new Date().toLocaleTimeString('bn-BD');
-    updated.textContent='সর্বশেষ আপডেট: '+when;
+    updated.textContent='সর্বশেষ snapshot: '+when;
+    /* Do not block the page on Apps Script. */
+    loadLivePublicOrders().catch(()=>{});
   }catch(err){
     /* If GitHub is temporarily unavailable, keep cached data visible. */
     if(!currentOrders.length){
@@ -300,7 +360,10 @@ orderIdInput.addEventListener('keydown',e=>{
 refreshBtn.addEventListener('click',()=>{
   refreshBtn.classList.add('loading');
   refreshBtn.textContent='Loading...';
-  loadOrders(false).finally(()=>{
+  Promise.allSettled([
+    loadOrders(false),
+    loadLivePublicOrders()
+  ]).finally(()=>{
     refreshBtn.classList.remove('loading');
     refreshBtn.textContent='↻ Refresh';
   });
@@ -308,9 +371,10 @@ refreshBtn.addEventListener('click',()=>{
 
 /* Always load the latest public snapshot from GitHub. No localStorage cache is used. */
 loadOrders(true);
+loadLivePublicOrders().catch(()=>{});
 
-/* Background refresh every 5 minutes. */
-setInterval(()=>loadOrders(false),300000);
+/* Background refresh every 60 seconds. */
+setInterval(()=>{ loadOrders(false); loadLivePublicOrders(); },60000);
 
 /* If opened from the order-success tracking link:
    order-tracking.html?order=SC-... */
