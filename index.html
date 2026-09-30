@@ -346,7 +346,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
   <div class="toast" id="toast"></div>
 
   <script>
-    const prices = {1000:80,10000:350,20000:650,50000:1550,100000:3000};
+    const prices = {1000:39,10000:350,20000:650,50000:1550,100000:2950};
     const form = document.getElementById('orderForm');
     const amount = document.getElementById('totalAmount');
     const screenshot = document.getElementById('screenshot');
@@ -375,7 +375,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
       if(!file){ fileName.textContent='কোনো file নির্বাচন করা হয়নি'; return; }
       fileName.textContent = file.name + ' — প্রস্তুত হচ্ছে...';
       try{
-        const dataUrl = await compressImage(file, 1500, 0.78);
+        const dataUrl = await compressImage(file, 1100, 0.68);
         base64Input.value = dataUrl;
         nameInput.value = file.name.replace(/[^\w.\- ]/g,'_');
         fileName.textContent = file.name + ' ✓';
@@ -489,7 +489,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
           transactionUsed=false;
           showTxnCheck('bad','⚠️ Verification-এর response আসেনি। Apps Script Web App deployment ঠিক আছে কিনা দেখুন।');
         }
-      },10000);
+      },7500);
     }
 
     // Prevent duplicate verification requests from blur + change.
