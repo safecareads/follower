@@ -232,14 +232,14 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
 <br>
 🤝 ধন্যবাদ। ❤️</p>
               <div class="package-grid" id="packageGrid">
-                <div class="pkg"><input type="radio" id="p1000" name="package" value="5000" data-price="295" checked><label for="p1000"><strong>৫ হাজার 🌍 গ্লোবাল follower</strong><span>৳ ২৯৫</span></label></div>
-                <div class="pkg"><input type="radio" id="p10000" name="package" value="10000" data-price="495"><label for="p10000"><strong>১০ হাজার 🌍 গ্লোবাল follower</strong><span>
+                <div class="pkg"><input type="radio" id="p1000" name="package" value="5000" data-price="295" checked><label for="p1000"><strong>৫ হাজার 🌍 গ্লোবাল follower</strong><span>
+
+                    <b style="color: #e53935; font-size: 18px;">৳ ২৩৫</b> <del style="color: #999;">৳ ৩০০</del>
+                    <div style="display:inline-flex; align-items:center; gap:5px; color:#e53935; font-weight:bold; white-space:nowrap;">⏳ অফার শেষ হতে বাকি:<span class="offer-timer">24:00:00</span></div>
+
                   
-                <b style="color: #e53935; font-size: 18px;">৳ ৩৯০</b> <del style="color: #999;">৳ ৬০০</del>
-                    <div style="display:inline-flex; align-items:center; gap:5px; color:#e53935; font-weight:bold; white-space:nowrap;">⏳ অফার শেষ হতে বাকি:<span id="offer-timer">24:00:00</span></div>
-                
-                
                 </span></label></div>
+                <div class="pkg"><input type="radio" id="p10000" name="package" value="10000" data-price="495"><label for="p10000"><strong>১০ হাজার 🌍 গ্লোবাল follower</strong><span>৳ ৪৯৫ </span></label></div>
                 <div class="pkg"><input type="radio" id="p20000" name="package" value="20000" data-price="950"><label for="p20000"><strong>২০ হাজার 🌍 গ্লোবাল follower</strong><span>৳ ৯৫০</span></label></div>
                 <div class="pkg"><input type="radio" id="p50000" name="package" value="50000" data-price="2150"><label for="p50000"><strong>৫০ হাজার 🌍 গ্লোবাল follower</strong><span>৳ ২,১৫০</span></label></div>
                 <br>
@@ -248,7 +248,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
                 <div class="pkg"><input type="radio" id="p1150" name="package" value="5000" data-price="1150"><label for="p1150"><strong>৫ হাজার 🇧🇩 বাংলাদেশী follower</strong>
                   <span>
                      <b style="color: #e53935; font-size: 18px;">৳ ৭২০</b> <del style="color: #999;">৳ ১২২৫</del>
-                    <div style="display:inline-flex; align-items:center; gap:5px; color:#e53935; font-weight:bold; white-space:nowrap;">⏳ অফার শেষ হতে বাকি:<span id="offer-timer">24:00:00</span></div>
+                    <div style="display:inline-flex; align-items:center; gap:5px; color:#e53935; font-weight:bold; white-space:nowrap;">⏳ অফার শেষ হতে বাকি:<span class="offer-timer">24:00:00</span></div>
                     <br>
                     <p>কমপ্লিট হতে ১-২ দিন সময় লাগতে পারে।</p>
                   </span>
@@ -750,40 +750,53 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
 
   </script>
 
-  <script>
+  
+<script>
 
-// এখানে ক্যাম্পেইন শুরুর সময় সেট করবে
-// নিচের উদাহরণটি বাংলাদেশ সময় অনুযায়ী
+// ==================================
+// CAMPAIGN START TIME
+// ==================================
 
-const campaignStart = new Date("2026-11-11T18:00:00+06:00").getTime();
+// ক্যাম্পেইন শুরুর তারিখ ও সময় এখানে বসাবে
+// বাংলাদেশ সময় (UTC+6)
 
-// ২৪ ঘণ্টা
-const campaignEnd = campaignStart + (24 * 60 * 60 * 1000);
+const campaignStart = new Date("2026-11-11T20:00:00+06:00").getTime();
+
+// অফারের সময়কাল: ২৪ ঘণ্টা
+const campaignDuration = 24 * 60 * 60 * 1000;
+
+// অফার শেষ হওয়ার সময়
+const campaignEnd = campaignStart + campaignDuration;
+
+
+// ==================================
+// COUNTDOWN SYSTEM
+// ==================================
 
 function updateTimer() {
 
-    const timer = document.getElementById("offer-timer");
-    if (!timer) return;
+    const now = Date.now();
+    const remaining = Math.max(0, campaignEnd - now);
 
-    const remaining = Math.max(0, campaignEnd - Date.now());
+    const hours = Math.floor(remaining / 3600000);
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
 
-    const h = Math.floor(remaining / 3600000);
-    const m = Math.floor((remaining % 3600000) / 60000);
-    const s = Math.floor((remaining % 60000) / 1000);
+    const timeText =
+        String(hours).padStart(2, "0") + ":" +
+        String(minutes).padStart(2, "0") + ":" +
+        String(seconds).padStart(2, "0");
 
-    timer.textContent =
-        String(h).padStart(2, "0") + ":" +
-        String(m).padStart(2, "0") + ":" +
-        String(s).padStart(2, "0");
-
-    if (remaining <= 0) {
-        timer.textContent = "00:00:00";
-    }
+    document.querySelectorAll(".offer-timer").forEach(function(timer) {
+        timer.textContent = timeText;
+    });
 }
 
+// প্রতি সেকেন্ডে আপডেট
 updateTimer();
 setInterval(updateTimer, 1000);
 
 </script>
+
 </body>
 </html>
