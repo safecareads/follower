@@ -242,6 +242,10 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
                 <div class="pkg"><input type="radio" id="p1150" name="package" value="5000" data-price="1150"><label for="p1150"><strong>৫ হাজার 🇧🇩 বাংলাদেশী follower</strong>
                   <span>
                      <b style="color: #e53935; font-size: 18px;">৳ ৭২০</b> <del style="color: #999;">৳ ১২২৫</del>
+                    <div style="color:#e53935; font-weight:bold; margin-top:8px;">
+    ⏳ অফার শেষ হতে বাকি:
+    <span id="offer-timer">24:00:00</span>
+</div>
                    
                     <br>
                     <p>বাংলাদেশী ফলোয়ার কমপ্লিট হতে ১-২ দিনের মত সময় লাগতে পারে।</p>
@@ -743,5 +747,41 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
     metaSuccessObserver.observe(success,{subtree:true,childList:true,characterData:true,attributes:true});
 
   </script>
+
+  <script>
+
+// এখানে ক্যাম্পেইন শুরুর সময় সেট করবে
+// নিচের উদাহরণটি বাংলাদেশ সময় অনুযায়ী
+
+const campaignStart = new Date("2026-11-11T18:00:00+06:00").getTime();
+
+// ২৪ ঘণ্টা
+const campaignEnd = campaignStart + (24 * 60 * 60 * 1000);
+
+function updateTimer() {
+
+    const timer = document.getElementById("offer-timer");
+    if (!timer) return;
+
+    const remaining = Math.max(0, campaignEnd - Date.now());
+
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+
+    timer.textContent =
+        String(h).padStart(2, "0") + ":" +
+        String(m).padStart(2, "0") + ":" +
+        String(s).padStart(2, "0");
+
+    if (remaining <= 0) {
+        timer.textContent = "00:00:00";
+    }
+}
+
+updateTimer();
+setInterval(updateTimer, 1000);
+
+</script>
 </body>
 </html>
