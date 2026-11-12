@@ -505,7 +505,7 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
         clearTimeout(verifyTimer);
         paymentVerified=false;
         transactionUsed=false;
-        showTxnCheck('bad','⚠️ Verification server থেকে response পাওয়া যায়নি। Apps Script Web App deployment/check করুন।');
+        showTxnCheck('bad','⚠️ Verification server-এর সাথে সংযোগ হয়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।');
         try{ delete window[callbackName]; }catch(e){}
       };
       window.__safeCareVerifyScript=script;
@@ -515,9 +515,9 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
         if(nonce===verifyNonce && txnCheck.textContent.includes('যাচাই করা হচ্ছে')){
           paymentVerified=false;
           transactionUsed=false;
-          showTxnCheck('bad','⚠️ Verification-এর response আসেনি। Apps Script Web App deployment ঠিক আছে কিনা দেখুন।');
+          showTxnCheck('wait','⏳ Google server থেকে response আসতে দেরি হচ্ছে। Transaction ID আবার যাচাই করতে একটু পরে ঘর থেকে বের হন।');
         }
-      },7500);
+      },20000);
     }
 
     // Prevent duplicate verification requests from blur + change.
@@ -536,9 +536,20 @@ src="https://www.facebook.com/tr?id=2287378818333997&ev=PageView&noscript=1"
     transactionIdInput.addEventListener('change', ()=>scheduleVerifyTransaction(150));
     transactionIdInput.addEventListener('input', ()=>{
       clearTimeout(verifyDebounceTimer);
+      clearTimeout(verifyTimer);
+
+      // Ignore any late response for the previous Transaction ID.
+      verifyNonce++;
       paymentVerified=false;
       transactionUsed=false;
       submitBtn.disabled=false;
+
+      if(window.__safeCareVerifyScript){
+        window.__safeCareVerifyScript.remove();
+        window.__safeCareVerifyScript=null;
+      }
+
+      txnCheck.style.display='none';
     });
 
     function makeClientOrderId(){
